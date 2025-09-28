@@ -16,7 +16,7 @@
     "@mithril-dev/mithril-client-wasm": "file:../mithril-client-wasm",
     "@popperjs/core": "^2.11.8",
     "@reduxjs/toolkit": "^2.5.1",
-    "bootstrap": "^5.3.3",
+    "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.11.3",
     "chart.js": "^4.4.7",
     "next": "^15.4.2",
