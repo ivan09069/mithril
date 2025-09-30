@@ -16,10 +16,10 @@
     "pretty:write": "prettier --write '**/*.{js,md}'"
   },
   "dependencies": {
-    "@docusaurus/core": "^3.8.0",
-    "@docusaurus/plugin-client-redirects": "^3.7.0",
+    "@docusaurus/core": "^3.9.0",
+    "@docusaurus/plugin-client-redirects": "^3.9.0",
     "@docusaurus/plugin-sitemap": "^3.7.0",
-    "@docusaurus/preset-classic": "^3.8.0",
+    "@docusaurus/preset-classic": "^3.9.0",
     "@docusaurus/theme-mermaid": "^3.8.0",
     "clsx": "^2.1.1",
     "react": "^18.3.1",
