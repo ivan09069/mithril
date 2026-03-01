@@ -70,7 +70,7 @@ pub struct Args {
     cardano_epoch_length: f64,
 
     /// Cardano node version, must be a valid semver version
-    #[clap(long, default_value = "10.5.1")]
+    #[clap(long, default_value = "10.6.2")]
     cardano_node_version: semver::Version,
 
     /// Epoch at which hard fork to the latest Cardano era will be made (starts with the latest era by default)
@@ -101,7 +101,7 @@ pub struct Args {
     #[clap(
         long,
         value_delimiter = ',',
-        default_value = "CardanoTransactions,CardanoImmutableFilesFull,CardanoStakeDistribution,CardanoDatabase"
+        default_value = "CardanoTransactions,CardanoBlocksTransactions,CardanoImmutableFilesFull,CardanoStakeDistribution,CardanoDatabase"
     )]
     signed_entity_types: Vec<String>,
 

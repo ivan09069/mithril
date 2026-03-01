@@ -128,6 +128,11 @@ impl Aggregator {
             ),
             ("CARDANO_NODE_VERSION", &cardano_node_version),
             ("CHAIN_OBSERVER_TYPE", aggregator_config.chain_observer_type),
+            (
+                "CARDANO_BLOCKS_TRANSACTIONS_SIGNING_CONFIG__SECURITY_PARAMETER",
+                "1",
+            ),
+            ("CARDANO_BLOCKS_TRANSACTIONS_SIGNING_CONFIG__STEP", "15"),
             ("CARDANO_TRANSACTIONS_PROVER_CACHE_POOL_SIZE", "5"),
             ("CARDANO_TRANSACTIONS_DATABASE_CONNECTION_POOL_SIZE", "5"),
             (
@@ -135,6 +140,10 @@ impl Aggregator {
                 "1",
             ),
             ("CARDANO_TRANSACTIONS_SIGNING_CONFIG__STEP", "15"),
+            (
+                "CARDANO_TRANSACTIONS_BLOCK_STREAMER_THROTTLING_INTERVAL",
+                "30",
+            ),
             ("PERSIST_USAGE_REPORT_INTERVAL_IN_SECONDS", "3"),
             ("CUSTOM_ORIGIN_TAG_WHITE_LIST", "E2E"),
             ("SIGNATURE_PROCESSOR_WAIT_DELAY_ON_ERROR_MS", "100"),

@@ -42,12 +42,25 @@ mod entities {
             Self {
                 allowed_discriminants: SignedEntityTypeDiscriminants::all(),
                 cardano_transactions_signing_config: Some(CardanoTransactionsSigningConfig::dummy()),
+                cardano_blocks_transactions_signing_config: Some(
+                    CardanoBlocksTransactionsSigningConfig::dummy(),
+                ),
             }
         }
     }
 
     impl Dummy for CardanoTransactionsSigningConfig {
         /// Return a dummy [CardanoTransactionsSigningConfig] (test-only).
+        fn dummy() -> Self {
+            Self {
+                security_parameter: BlockNumber(0),
+                step: BlockNumber(15),
+            }
+        }
+    }
+
+    impl Dummy for CardanoBlocksTransactionsSigningConfig {
+        /// Return a dummy [CardanoBlocksTransactionsSigningConfig] (test-only).
         fn dummy() -> Self {
             Self {
                 security_parameter: BlockNumber(0),
@@ -101,11 +114,12 @@ mod messages {
 
     use crate::crypto_helper::KesEvolutions;
     use crate::entities::{
-        AncillaryLocation, BlockNumber, CardanoDbBeacon, CardanoTransactionsSetProof,
-        CardanoTransactionsSigningConfig, CompressionAlgorithm, DigestLocation, Epoch,
-        ImmutablesLocation, MultiFilesUri, ProtocolMessage, ProtocolMessagePartKey,
-        ProtocolParameters, SignedEntityType, SignedEntityTypeDiscriminants, StakeDistribution,
-        StakeDistributionParty, SupportedEra, TemplateUri,
+        AncillaryLocation, BlockNumber, CardanoBlocksTransactionsSigningConfig, CardanoDbBeacon,
+        CardanoTransactionsSetProof, CardanoTransactionsSigningConfig, CompressionAlgorithm,
+        DigestLocation, Epoch, ImmutablesLocation, MultiFilesUri, ProtocolMessage,
+        ProtocolMessagePartKey, ProtocolParameters, SignedEntityType,
+        SignedEntityTypeDiscriminants, StakeDistribution, StakeDistributionParty, SupportedEra,
+        TemplateUri,
     };
     use crate::messages::*;
 
@@ -342,7 +356,7 @@ mod messages {
     }
 
     impl Dummy for CardanoTransactionSnapshotMessage {
-        /// Return a dummy [CertificateMessage] (test-only).
+        /// Return a dummy [CardanoTransactionSnapshotMessage] (test-only).
         fn dummy() -> Self {
             Self {
                 merkle_root: "mkroot-123".to_string(),
@@ -358,12 +372,46 @@ mod messages {
     }
 
     impl Dummy for CardanoTransactionSnapshotListItemMessage {
-        /// Return a dummy [CertificateMessage] (test-only).
+        /// Return a dummy [CardanoTransactionSnapshotListItemMessage] (test-only).
         fn dummy() -> Self {
             Self {
                 merkle_root: "mkroot-123".to_string(),
                 epoch: Epoch(10),
                 block_number: BlockNumber(100),
+                hash: "hash-123".to_string(),
+                certificate_hash: "cert-hash-123".to_string(),
+                created_at: DateTime::parse_from_rfc3339("2023-01-19T13:43:05.618857482Z")
+                    .unwrap()
+                    .with_timezone(&Utc),
+            }
+        }
+    }
+
+    impl Dummy for CardanoBlocksTransactionsSnapshotMessage {
+        /// Return a dummy [CardanoBlocksTransactionsSnapshotMessage] (test-only).
+        fn dummy() -> Self {
+            Self {
+                merkle_root: "mkroot-123".to_string(),
+                epoch: Epoch(10),
+                block_number_signed: BlockNumber(100),
+                block_number_tip: BlockNumber(115),
+                hash: "hash-123".to_string(),
+                certificate_hash: "cert-hash-123".to_string(),
+                created_at: DateTime::parse_from_rfc3339("2023-01-19T13:43:05.618857482Z")
+                    .unwrap()
+                    .with_timezone(&Utc),
+            }
+        }
+    }
+
+    impl Dummy for CardanoBlocksTransactionsSnapshotListItemMessage {
+        /// Return a dummy [CardanoBlocksTransactionsSnapshotListItemMessage] (test-only).
+        fn dummy() -> Self {
+            Self {
+                merkle_root: "mkroot-123".to_string(),
+                epoch: Epoch(10),
+                block_number_signed: BlockNumber(100),
+                block_number_tip: BlockNumber(115),
                 hash: "hash-123".to_string(),
                 certificate_hash: "cert-hash-123".to_string(),
                 created_at: DateTime::parse_from_rfc3339("2023-01-19T13:43:05.618857482Z")
@@ -469,6 +517,9 @@ mod messages {
                     phi_f: 0.65,
                 },
                 cardano_transactions_signing_config: Some(CardanoTransactionsSigningConfig::dummy()),
+                cardano_blocks_transactions_signing_config: Some(
+                    CardanoBlocksTransactionsSigningConfig::dummy(),
+                ),
                 available_signed_entity_types: SignedEntityTypeDiscriminants::all(),
             }
         }

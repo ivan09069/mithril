@@ -1,6 +1,6 @@
 [package]
 name = "mithril-common"
-version = "0.6.45"
+version = "0.6.53"
 description = "Common types, interfaces, and utilities for Mithril nodes."
 authors = { workspace = true }
 edition = { workspace = true }
@@ -30,6 +30,8 @@ num-integer-backend = ["mithril-stm/num-integer-backend"]
 # Disable signer certification, to be used only for tests
 allow_skip_signer_certification = []
 
+future_snark = [] # For activating snark features
+
 [dependencies]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
@@ -41,7 +43,7 @@ ciborium = "0.2.2"
 ckb-merkle-mountain-range = "0.6.1"
 digest = { workspace = true }
 ed25519-dalek = { version = "2.2.0", features = ["rand_core", "serde"] }
-fixed = "1.29.0"
+fixed = "1.30.0"
 hex = { workspace = true }
 kes-summed-ed25519 = { version = "0.2.1", features = [
     "serde_enabled",
@@ -66,13 +68,13 @@ typetag = "0.2.21"
 walkdir = "2.5.0"
 
 [target.'cfg(target_family = "wasm")'.dependencies]
-wasm-bindgen = "0.2.106"
+wasm-bindgen = "0.2.108"
 
 [build-dependencies]
 mithril-build-script = { path = "../internal/mithril-build-script", version = "=0.2" }
 
 [dev-dependencies]
-criterion = { version = "0.8.1", features = ["html_reports", "async_tokio"] }
+criterion = { version = "0.8.2", features = ["html_reports", "async_tokio"] }
 mockall = { workspace = true }
 slog-async = { workspace = true }
 slog-term = { workspace = true }

@@ -1,12 +1,15 @@
 [package]
 name = "mithrildemo"
-version = "0.1.54"
+version = "0.1.55"
 authors = { workspace = true }
 edition = { workspace = true }
 documentation = { workspace = true }
 homepage = { workspace = true }
 license = { workspace = true }
 repository = { workspace = true }
+
+[features]
+future_snark = [] # For activating snark features
 
 [dependencies]
 clap = { workspace = true }

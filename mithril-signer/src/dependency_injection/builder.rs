@@ -30,9 +30,9 @@ use mithril_common::crypto_helper::{
 };
 use mithril_common::messages::RegisterSignatureMessageDmq;
 use mithril_common::signable_builder::{
-    CardanoStakeDistributionSignableBuilder, CardanoTransactionsSignableBuilder,
-    MithrilSignableBuilderService, MithrilStakeDistributionSignableBuilder,
-    SignableBuilderServiceDependencies,
+    CardanoBlocksTransactionsSignableBuilder, CardanoStakeDistributionSignableBuilder,
+    CardanoTransactionsSignableBuilder, MithrilSignableBuilderService,
+    MithrilStakeDistributionSignableBuilder, SignableBuilderServiceDependencies,
 };
 use mithril_common::{MITHRIL_SIGNER_VERSION_HEADER, StdResult};
 
@@ -324,12 +324,19 @@ impl<'a> DependenciesBuilder<'a> {
             network,
             self.root_logger(),
         );
-        let block_scanner = Arc::new(CardanoBlockScanner::new(
-            Arc::new(Mutex::new(chain_block_reader)),
-            self.config
-                .cardano_transactions_block_streamer_max_roll_forwards_per_poll,
-            self.root_logger(),
-        ));
+        let block_scanner = Arc::new(
+            CardanoBlockScanner::new(
+                Arc::new(Mutex::new(chain_block_reader)),
+                self.config
+                    .cardano_transactions_block_streamer_max_roll_forwards_per_poll,
+                self.root_logger(),
+            )
+            .set_throttling_interval(
+                self.config
+                    .cardano_transactions_block_streamer_throttling_interval
+                    .map(Duration::from_millis),
+            ),
+        );
         let chain_data_importer = Arc::new(CardanoChainDataImporter::new(
             block_scanner,
             chain_data_store.clone(),
@@ -372,9 +379,15 @@ impl<'a> DependenciesBuilder<'a> {
         let cardano_transactions_builder = Arc::new(CardanoTransactionsSignableBuilder::<
             MKTreeStoreSqlite,
         >::new(
-            state_machine_transactions_importer,
-            block_range_root_retriever,
+            state_machine_transactions_importer.clone(),
+            block_range_root_retriever.clone(),
         ));
+        let cardano_blocks_transactions_builder = Arc::new(
+            CardanoBlocksTransactionsSignableBuilder::<MKTreeStoreSqlite>::new(
+                state_machine_transactions_importer,
+                block_range_root_retriever,
+            ),
+        );
         let cardano_stake_distribution_signable_builder = Arc::new(
             CardanoStakeDistributionSignableBuilder::new(stake_store.clone()),
         );
@@ -401,6 +414,7 @@ impl<'a> DependenciesBuilder<'a> {
             mithril_stake_distribution_signable_builder,
             cardano_immutable_snapshot_builder,
             cardano_transactions_builder,
+            cardano_blocks_transactions_builder,
             cardano_stake_distribution_signable_builder,
             cardano_database_signable_builder,
         );

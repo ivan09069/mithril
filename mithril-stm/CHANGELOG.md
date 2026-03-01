@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.9.19 (02-25-2026)
+
+### Fixed
+
+- Flakiness in the CI due to non deterministic test SRS generation.
+
+## 0.9.18 (02-20-2026)
+
+### Added
+
+- Added a `from_raw` conversion function for `BaseFieldElement` that applies modulus reduction to the input.
+
+## 0.9.17 (02-19-2026)
+
+### Added
+
+- Added the computation of the lottery target value for SNARK.
+- Switched back-end for computation from rug to num-integer.
+
+## 0.9.16 (02-18-2026)
+
+### Changed
+
+- Switched Halo2 circuit and golden helpers to reuse existing STM types and implementations.
+- Applied internal refactoring and cleanup in Halo2 witness and helper layers.
+
+### Removed
+
+- Removed the `circuits/halo2/off-circuit` module.
+
+## 0.9.15 (02-13-2026)
+
+### Added
+
+- Added SNARK compatibility for key registration.
+
+## 0.9.14 (02-11-2026)
+
+### Added
+
+- Fixed `hash_to_projective_point` function and Schnorr signature implementation to match the circuit.
+
+## 0.9.13 (02-06-2026)
+
+### Added
+
+- Added golden tests for the Halo2 STM circuit.
+
 ## 0.9.12 (02-02-2026)
 
 ### Added

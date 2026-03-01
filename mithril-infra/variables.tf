@@ -173,7 +173,7 @@ locals {
 variable "cardano_image_id" {
   type        = string
   description = "The Cardano image tag of service to deploy"
-  default     = "10.5.1"
+  default     = "10.6.2"
 }
 
 variable "cardano_image_registry" {
@@ -305,6 +305,31 @@ variable "mithril_aggregator_snapshot_use_cdn_domain" {
   description = "Use CDN domain for constructing snapshot url"
   default     = false
 }
+
+variable "mithril_aggregator_cardano_blocks_transactions_prover_cache_pool_size" {
+  type        = number
+  description = "Cardano blocks transactions prover cache pool size"
+  default     = 10
+}
+
+variable "mithril_aggregator_cardano_blocks_transactions_database_connection_pool_size" {
+  type        = number
+  description = "Cardano blocks transactions database connection pool size"
+  default     = 10
+}
+
+variable "mithril_aggregator_cardano_blocks_transactions_signing_config_security_parameter" {
+  type        = number
+  description = "Number of blocks to discard from the tip of the chain when importing Cardano blocks and transactions"
+  default     = 100
+}
+
+variable "mithril_aggregator_cardano_blocks_transactions_signing_config_step" {
+  type        = number
+  description = "Number of blocks between signature of the Cardano blocks and transactions"
+  default     = 30
+}
+
 
 variable "mithril_aggregator_cardano_transactions_prover_cache_pool_size" {
   type        = number

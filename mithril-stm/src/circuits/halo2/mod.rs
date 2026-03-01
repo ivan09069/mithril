@@ -2,6 +2,9 @@
 
 pub mod circuit;
 pub mod constants;
-pub mod hash;
-pub mod off_circuit;
+pub mod gadgets;
 pub mod types;
+pub(crate) mod utils;
+
+#[cfg(test)]
+pub(crate) mod golden;

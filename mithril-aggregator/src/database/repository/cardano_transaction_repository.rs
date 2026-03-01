@@ -1,3 +1,4 @@
+use std::collections::BTreeSet;
 use std::ops::{Deref, Range};
 use std::sync::Arc;
 
@@ -5,10 +6,10 @@ use mithril_cardano_node_chain::chain_importer::ChainDataStore;
 use mithril_common::StdResult;
 use mithril_common::crypto_helper::{MKTreeNode, MKTreeStorer};
 use mithril_common::entities::{
-    BlockNumber, BlockRange, CardanoBlockWithTransactions, CardanoTransaction, ChainPoint,
-    SlotNumber, TransactionHash,
+    BlockNumber, BlockRange, CardanoBlockTransactionMkTreeNode, CardanoBlockWithTransactions,
+    CardanoTransaction, ChainPoint, SlotNumber, TransactionHash,
 };
-use mithril_common::signable_builder::BlockRangeRootRetriever;
+use mithril_common::signable_builder::{BlockRangeRootRetriever, LegacyBlockRangeRootRetriever};
 use mithril_persistence::database::repository::CardanoTransactionRepository;
 use mithril_persistence::sqlite::SqliteConnectionPool;
 
@@ -43,6 +44,11 @@ impl ChainDataStore for AggregatorCardanoChainDataRepository {
     }
 
     async fn get_highest_block_range(&self) -> StdResult<Option<BlockRange>> {
+        let record = self.inner.retrieve_highest_block_range_root().await?;
+        Ok(record.map(|record| record.range))
+    }
+
+    async fn get_highest_legacy_block_range(&self) -> StdResult<Option<BlockRange>> {
         let record = self.inner.retrieve_highest_legacy_block_range_root().await?;
         Ok(record.map(|record| record.range))
     }
@@ -54,6 +60,14 @@ impl ChainDataStore for AggregatorCardanoChainDataRepository {
         self.inner
             .store_blocks_and_transactions(block_with_transactions)
             .await
+    }
+
+    async fn get_blocks_and_transactions_in_range(
+        &self,
+        range: Range<BlockNumber>,
+    ) -> StdResult<BTreeSet<CardanoBlockTransactionMkTreeNode>> {
+        let records = self.inner.get_blocks_with_transactions_in_range_blocks(range).await?;
+        Ok(records.into_iter().flat_map(|b| b.into_mk_tree_nodes()).collect())
     }
 
     async fn get_transactions_in_range(
@@ -72,6 +86,16 @@ impl ChainDataStore for AggregatorCardanoChainDataRepository {
         block_ranges: Vec<(BlockRange, MKTreeNode)>,
     ) -> StdResult<()> {
         if !block_ranges.is_empty() {
+            self.inner.create_block_range_roots(block_ranges).await?;
+        }
+        Ok(())
+    }
+
+    async fn store_legacy_block_range_roots(
+        &self,
+        block_ranges: Vec<(BlockRange, MKTreeNode)>,
+    ) -> StdResult<()> {
+        if !block_ranges.is_empty() {
             self.inner.create_legacy_block_range_roots(block_ranges).await?;
         }
         Ok(())
@@ -85,6 +109,20 @@ impl ChainDataStore for AggregatorCardanoChainDataRepository {
             .remove_rolled_back_blocks_transactions_and_block_range_by_slot_number(slot_number)
             .await
     }
+
+    async fn optimize(&self) -> StdResult<()> {
+        self.inner.optimize()
+    }
+}
+
+#[async_trait::async_trait]
+impl<S: MKTreeStorer> LegacyBlockRangeRootRetriever<S> for AggregatorCardanoChainDataRepository {
+    async fn retrieve_block_range_roots<'a>(
+        &'a self,
+        up_to_beacon: BlockNumber,
+    ) -> StdResult<Box<dyn Iterator<Item = (BlockRange, MKTreeNode)> + 'a>> {
+        self.inner.retrieve_legacy_block_range_roots_up_to(up_to_beacon).await
+    }
 }
 
 #[async_trait::async_trait]
@@ -93,7 +131,7 @@ impl<S: MKTreeStorer> BlockRangeRootRetriever<S> for AggregatorCardanoChainDataR
         &'a self,
         up_to_beacon: BlockNumber,
     ) -> StdResult<Box<dyn Iterator<Item = (BlockRange, MKTreeNode)> + 'a>> {
-        self.inner.retrieve_legacy_block_range_roots_up_to(up_to_beacon).await
+        self.inner.retrieve_block_range_roots_up_to(up_to_beacon).await
     }
 }
 

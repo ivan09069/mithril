@@ -7,7 +7,7 @@ use mithril_common::entities::{BlockNumber, BlockRange};
 use crate::database::record::BlockRangeRootRecord;
 use crate::sqlite::{Query, SourceAlias, SqLiteEntity, WhereCondition};
 
-/// Query to delete old legacy [BlockRangeRootRecord] from the sqlite database
+/// Query to delete legacy [BlockRangeRootRecord] entries from the sqlite database
 pub struct DeleteLegacyBlockRangeRootQuery {
     condition: WhereCondition,
 }

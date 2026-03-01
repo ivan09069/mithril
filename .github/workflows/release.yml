@@ -99,7 +99,7 @@ jobs:
               {
                 k     = 5
                 m     = 100
-                phi_f = 0.65
+                phi_f = 0.70
               }
             mithril_signers: |
               {
@@ -122,8 +122,8 @@ jobs:
             mithril_api_domain: api.mithril.network
             mithril_protocol_parameters: |
               {
-                k     = 2422
-                m     = 20973
+                k     = 1944
+                m     = 16948
                 phi_f = 0.20
               }
             mithril_signers: |
@@ -186,6 +186,10 @@ jobs:
           mithril_aggregator_zstandard_parameters_level: ${{ vars.AGGREGATOR_SNAPSHOT_ZSTANDARD_LEVEL }}
           mithril_aggregator_zstandard_parameters_workers: ${{ vars.AGGREGATOR_SNAPSHOT_ZSTANDARD_WORKERS }}
           mithril_aggregator_blockfrost_parameters: ${{ secrets.AGGREGATOR_BLOCKFROST_PARAMETERS }}
+          mithril_aggregator_cardano_blocks_transactions_prover_cache_pool_size: ${{ vars.AGGREGATOR_CARDANO_BLOCKS_TRANSACTIONS_PROVER_CACHE_POOL_SIZE }}
+          mithril_aggregator_cardano_blocks_transactions_database_connection_pool_size: ${{ vars.AGGREGATOR_CARDANO_BLOCKS_TRANSACTIONS_DATABASE_CONNECTION_POOL_SIZE }}
+          mithril_aggregator_cardano_blocks_transactions_signing_config_security_parameter: ${{ vars.AGGREGATOR_CARDANO_BLOCKS_TRANSACTIONS_SIGNING_CONFIG_SECURITY_PARAMETER }}
+          mithril_aggregator_cardano_blocks_transactions_signing_config_step: ${{ vars.AGGREGATOR_CARDANO_BLOCKS_TRANSACTIONS_SIGNING_CONFIG_STEP }}
           mithril_aggregator_cardano_transactions_prover_cache_pool_size: ${{ vars.AGGREGATOR_CARDANO_TRANSACTIONS_PROVER_CACHE_POOL_SIZE }}
           mithril_aggregator_cardano_transactions_database_connection_pool_size: ${{ vars.AGGREGATOR_CARDANO_TRANSACTIONS_DATABASE_CONNECTION_POOL_SIZE }}
           mithril_aggregator_cardano_transactions_signing_config_security_parameter: ${{ vars.AGGREGATOR_CARDANO_TRANSACTIONS_SIGNING_CONFIG_SECURITY_PARAMETER }}
@@ -211,16 +215,6 @@ jobs:
       fail-fast: true
       max-parallel: 1
       matrix:
-        package:
-          [
-            mithril-stm,
-            mithril-build-script,
-            mithril-common,
-            mithril-aggregator-client,
-            mithril-aggregator-discovery,
-            mithril-cardano-node-internal-database,
-            mithril-client,
-          ]
         include:
           - package: mithril-stm
             api_token_secret_name: CRATES_IO_API_TOKEN
@@ -228,6 +222,10 @@ jobs:
             api_token_secret_name: CRATES_IO_API_TOKEN_MITHRIL_BUILD_SCRIPT
           - package: mithril-common
             api_token_secret_name: CRATES_IO_API_TOKEN_MITHRIL_COMMON
+          - package: mithril-aggregator-client,
+            api_token_secret_name: CRATES_IO_API_TOKEN_MITHRIL_AGGREGATOR_CLIENT
+          - package: mithril-aggregator-discovery,
+            api_token_secret_name: CRATES_IO_API_TOKEN_MITHRIL_AGGREGATOR_DISCOVERY
           - package: mithril-cardano-node-internal-database
             api_token_secret_name: CRATES_IO_API_TOKEN_MITHRIL_CARDANO_NODE_INTERNAL_DATABASE
           - package: mithril-client

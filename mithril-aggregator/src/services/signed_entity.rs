@@ -12,9 +12,9 @@ use tokio::task::JoinHandle;
 use mithril_common::{
     StdResult,
     entities::{
-        BlockNumber, CardanoDatabaseSnapshot, CardanoDbBeacon, CardanoStakeDistribution,
-        CardanoTransactionsSnapshot, Certificate, Epoch, MithrilStakeDistribution,
-        SignedEntityType, SignedEntityTypeDiscriminants, Snapshot,
+        BlockNumber, CardanoBlocksTransactionsSnapshot, CardanoDatabaseSnapshot, CardanoDbBeacon,
+        CardanoStakeDistribution, CardanoTransactionsSnapshot, Certificate, Epoch,
+        MithrilStakeDistribution, SignedEntityType, SignedEntityTypeDiscriminants, Snapshot,
     },
     logging::LoggerExtensions,
     signable_builder::{Artifact, SignedEntity},
@@ -80,6 +80,11 @@ pub trait SignedEntityService: Send + Sync {
         &self,
     ) -> StdResult<Option<SignedEntity<CardanoTransactionsSnapshot>>>;
 
+    /// Return the last signed Cardano Blocks and Transactions Snapshot.
+    async fn get_last_cardano_blocks_transactions_snapshot(
+        &self,
+    ) -> StdResult<Option<SignedEntity<CardanoBlocksTransactionsSnapshot>>>;
+
     /// Return a list of signed Cardano stake distribution ordered by creation
     /// date descending.
     async fn get_last_signed_cardano_stake_distributions(
@@ -98,6 +103,8 @@ pub struct MithrilSignedEntityService {
         Arc<dyn ArtifactBuilder<CardanoDbBeacon, Snapshot>>,
     cardano_transactions_artifact_builder:
         Arc<dyn ArtifactBuilder<BlockNumber, CardanoTransactionsSnapshot>>,
+    cardano_blocks_transactions_artifact_builder:
+        Arc<dyn ArtifactBuilder<BlockNumber, CardanoBlocksTransactionsSnapshot>>,
     signed_entity_type_lock: Arc<SignedEntityTypeLock>,
     cardano_stake_distribution_artifact_builder:
         Arc<dyn ArtifactBuilder<Epoch, CardanoStakeDistribution>>,
@@ -115,6 +122,8 @@ pub struct SignedEntityServiceArtifactsDependencies {
         Arc<dyn ArtifactBuilder<CardanoDbBeacon, Snapshot>>,
     cardano_transactions_artifact_builder:
         Arc<dyn ArtifactBuilder<BlockNumber, CardanoTransactionsSnapshot>>,
+    cardano_blocks_transactions_artifact_builder:
+        Arc<dyn ArtifactBuilder<BlockNumber, CardanoBlocksTransactionsSnapshot>>,
     cardano_stake_distribution_artifact_builder:
         Arc<dyn ArtifactBuilder<Epoch, CardanoStakeDistribution>>,
     cardano_database_artifact_builder:
@@ -133,6 +142,9 @@ impl SignedEntityServiceArtifactsDependencies {
         cardano_transactions_artifact_builder: Arc<
             dyn ArtifactBuilder<BlockNumber, CardanoTransactionsSnapshot>,
         >,
+        cardano_blocks_transactions_artifact_builder: Arc<
+            dyn ArtifactBuilder<BlockNumber, CardanoBlocksTransactionsSnapshot>,
+        >,
         cardano_stake_distribution_artifact_builder: Arc<
             dyn ArtifactBuilder<Epoch, CardanoStakeDistribution>,
         >,
@@ -144,6 +156,7 @@ impl SignedEntityServiceArtifactsDependencies {
             mithril_stake_distribution_artifact_builder,
             cardano_immutable_files_full_artifact_builder,
             cardano_transactions_artifact_builder,
+            cardano_blocks_transactions_artifact_builder,
             cardano_stake_distribution_artifact_builder,
             cardano_database_artifact_builder,
         }
@@ -167,6 +180,8 @@ impl MithrilSignedEntityService {
                 .cardano_immutable_files_full_artifact_builder,
             cardano_transactions_artifact_builder: dependencies
                 .cardano_transactions_artifact_builder,
+            cardano_blocks_transactions_artifact_builder: dependencies
+                .cardano_blocks_transactions_artifact_builder,
             cardano_stake_distribution_artifact_builder: dependencies
                 .cardano_stake_distribution_artifact_builder,
             cardano_database_artifact_builder: dependencies.cardano_database_artifact_builder,
@@ -265,8 +280,16 @@ impl MithrilSignedEntityService {
                         )
                     })?,
             )),
-            SignedEntityType::CardanoBlocksTransactions(_epoch, _block_number) =>
-                Err(anyhow!("Cardano blocks transactions is not supported yet")),
+            SignedEntityType::CardanoBlocksTransactions(_epoch, block_number)  => Ok(Arc::new(
+                self.cardano_blocks_transactions_artifact_builder
+                    .compute_artifact(block_number, certificate)
+                    .await
+                    .with_context(|| {
+                        format!(
+                            "Signed Entity Service can not compute artifact for entity type: '{signed_entity_type}'"
+                        )
+                    })?,
+            )),
             SignedEntityType::CardanoDatabase(beacon) => Ok(Arc::new(
                 self.cardano_database_artifact_builder
                     .compute_artifact(beacon, certificate)
@@ -474,14 +497,21 @@ impl SignedEntityService for MithrilSignedEntityService {
     async fn get_last_cardano_transaction_snapshot(
         &self,
     ) -> StdResult<Option<SignedEntity<CardanoTransactionsSnapshot>>> {
-        let mut signed_entities_records = self
-            .get_last_signed_entities(1, &SignedEntityTypeDiscriminants::CardanoTransactions)
-            .await?;
+        self.get_last_signed_entities(1, &SignedEntityTypeDiscriminants::CardanoTransactions)
+            .await?
+            .pop()
+            .map(|r| r.try_into())
+            .transpose()
+    }
 
-        match signed_entities_records.pop() {
-            Some(record) => Ok(Some(record.try_into()?)),
-            None => Ok(None),
-        }
+    async fn get_last_cardano_blocks_transactions_snapshot(
+        &self,
+    ) -> StdResult<Option<SignedEntity<CardanoBlocksTransactionsSnapshot>>> {
+        self.get_last_signed_entities(1, &SignedEntityTypeDiscriminants::CardanoBlocksTransactions)
+            .await?
+            .pop()
+            .map(|r| r.try_into())
+            .transpose()
     }
 
     async fn get_last_signed_cardano_stake_distributions(
@@ -556,6 +586,8 @@ mod tests {
             MockArtifactBuilder<CardanoDbBeacon, Snapshot>,
         mock_cardano_transactions_artifact_builder:
             MockArtifactBuilder<BlockNumber, CardanoTransactionsSnapshot>,
+        mock_cardano_blocks_transactions_artifact_builder:
+            MockArtifactBuilder<BlockNumber, CardanoBlocksTransactionsSnapshot>,
         mock_cardano_stake_distribution_artifact_builder:
             MockArtifactBuilder<Epoch, CardanoStakeDistribution>,
         mock_cardano_database_artifact_builder:
@@ -578,6 +610,10 @@ mod tests {
                     BlockNumber,
                     CardanoTransactionsSnapshot,
                 >::new(),
+                mock_cardano_blocks_transactions_artifact_builder: MockArtifactBuilder::<
+                    BlockNumber,
+                    CardanoBlocksTransactionsSnapshot,
+                >::new(),
                 mock_cardano_stake_distribution_artifact_builder: MockArtifactBuilder::<
                     Epoch,
                     CardanoStakeDistribution,
@@ -594,6 +630,7 @@ mod tests {
                 Arc::new(self.mock_mithril_stake_distribution_artifact_builder),
                 Arc::new(self.mock_cardano_immutable_files_full_artifact_builder),
                 Arc::new(self.mock_cardano_transactions_artifact_builder),
+                Arc::new(self.mock_cardano_blocks_transactions_artifact_builder),
                 Arc::new(self.mock_cardano_stake_distribution_artifact_builder),
                 Arc::new(self.mock_cardano_database_artifact_builder),
             );
@@ -651,6 +688,7 @@ mod tests {
                 Arc::new(self.mock_mithril_stake_distribution_artifact_builder),
                 Arc::new(cardano_immutable_files_full_long_artifact_builder),
                 Arc::new(self.mock_cardano_transactions_artifact_builder),
+                Arc::new(self.mock_cardano_blocks_transactions_artifact_builder),
                 Arc::new(self.mock_cardano_stake_distribution_artifact_builder),
                 Arc::new(self.mock_cardano_database_artifact_builder),
             );
@@ -876,6 +914,60 @@ mod tests {
             SignedEntityType::CardanoTransactions(Epoch(1), block_number),
             CardanoTransactionsSnapshot::new("merkle_root".to_string(), block_number),
             &|mock_injector| &mut mock_injector.mock_cardano_transactions_artifact_builder,
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn build_cardano_blocks_transactions_snapshot_artifact_when_given_cardano_blocks_transactions_type()
+     {
+        let mut mock_container = MockDependencyInjector::new();
+
+        let block_number = BlockNumber(151);
+        let offset_security_parameter = BlockNumber(15);
+        let expected = CardanoBlocksTransactionsSnapshot::new(
+            "merkle_root".to_string(),
+            block_number,
+            offset_security_parameter,
+        );
+
+        mock_container
+            .mock_cardano_blocks_transactions_artifact_builder
+            .expect_compute_artifact()
+            .times(1)
+            .returning(move |_, _| {
+                Ok(CardanoBlocksTransactionsSnapshot::new(
+                    "merkle_root".to_string(),
+                    block_number,
+                    offset_security_parameter,
+                ))
+            });
+
+        let artifact_builder_service = mock_container.build_artifact_builder_service();
+
+        let certificate = fake_data::certificate("hash".to_string());
+        let signed_entity_type =
+            SignedEntityType::CardanoBlocksTransactions(Epoch(1), block_number);
+        let artifact = artifact_builder_service
+            .compute_artifact(signed_entity_type.clone(), &certificate)
+            .await
+            .unwrap();
+
+        assert_expected(&expected, &artifact);
+    }
+
+    #[tokio::test]
+    async fn should_store_the_artifact_when_creating_artifact_for_cardano_blocks_transactions() {
+        let block_number = BlockNumber(149);
+        let offset_security_parameter = BlockNumber(15);
+        generic_test_that_the_artifact_is_stored(
+            SignedEntityType::CardanoBlocksTransactions(Epoch(1), block_number),
+            CardanoBlocksTransactionsSnapshot::new(
+                "merkle_root".to_string(),
+                block_number,
+                offset_security_parameter,
+            ),
+            &|mock_injector| &mut mock_injector.mock_cardano_blocks_transactions_artifact_builder,
         )
         .await;
     }
